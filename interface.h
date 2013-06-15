@@ -1,8 +1,8 @@
 /*=================================================*/
-/*|||||||||||||||| MAC 323 - EP3 ||||||||||||||||||*/
+/*|||||||||||||||| MAC 323 - EP4 ||||||||||||||||||*/
 /*||||| Nome: Carlos Eduardo Leao Elmadjian |||||||*/
 /*||||| NUSP: 5685741 |||||||||||||||||||||||||||||*/
-/*||||| Arquivo: LLRBT.h ||||||||||||||||||||||||||*/
+/*||||| Arquivo: interface.h ||||||||||||||||||||||*/
 /*=================================================*/
 
 /*====== Definicao de tipos e structs para o cliente =======*/
@@ -13,33 +13,41 @@
 typedef struct valor
 {
 	char *palavra;
-	char *lemma;
-	int loc_ini;
-	int loc_fim;
+	char *lema;
 	int sentenca;
-	struct valor *prox;
 } Valor;
 
 
 /*====== prototipos das funcoes para o cliente ============ */
 
-/*manipulacao de valores (palavras, lemas, posicao das palavras)*/
-Valor* buildVal(char *palavra, char *lemma, int ini, int fim, int sent_id);
+void ST_t1_init(); /*falta fazer*/
+void ST_t2_init(); /*falta fazer*/
+int ST_t1_count();
+int ST_t2_count(); /*falta fazer*/
+void ST_t1_insert(); 
+void ST_t2_insert(); /*falta fazer*/
+Valor* ST_t1_search();
+Valor* ST_t2_search(); /*falta fazer*/
+
+
+
+/*manipulacao de valores (palavras, lemas, posicao da sentenca)*/
+Valor* buildVal(char *palavra, char *lema, int sent_id);
 void printValorPal(Valor *val, char *palavra, int modo);
 void printValorLem(Valor *val, int modo);
 
 /*manipulacao de tabelas de simbolos*/
-void insertPalST(char *chave, Valor *val);
+/*void insertPalST(char *chave, Valor *val);
 void insertLemST(char *chave, Valor *val);
 Valor* searchPalST(char *chave);
 Valor* searchLemST(char *chave);
 void chavePalST(int modo);
 void chaveLemST(int modo);
-int contaValDistST(int modo);
+int contaValDistST(int modo);*/
 
 /*manipulacao de sentencas*/
 void initSentence(int slots);
-void insertSentence(int pos, char *id, char *frase, char *info);
+void insertSentence(int pos, int *id, int *frase, int *info);
 void printSentence(int num, int modo);
 
 /*funcoes de uso geral*/

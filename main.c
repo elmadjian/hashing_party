@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "LLRBT.h"
+#include "interface.h"
 #define BUFFER 65536
 
 
@@ -30,21 +30,26 @@ int main(int argc, char **argv)
 	/* Nsnt -> guarda o numero total de sentencas                      */
 	/* Ntkn -> guarda o numero total de tokens                         */
 	/* Npal -> guarda o numero total de palavras                       */
+	/* posicao ->        */
 	/* arquivo -> descritor de filename (STREAM)                       */
 	/*                                                                 */
 	/*=================================================================*/
 	char *token;
 	char filename[32];
+	char opcao[32];
 	char primPalavra[256];
-	char id[256];
+	/*char id[256];*/
 	char copia[256];
-	char frase[BUFFER];
+	/*char frase[BUFFER];*/
 	char linha[BUFFER];
-	char temp[4][256];
+	char temp[2][256];
 	int i, j, k, Nsnt, Ntkn = 0, Npal = 0;
+	int id[2];
+	int frase[2];
+	int info[2];
 	FILE *arquivo;
 
-	/*==== Testando parêmtros de entrada ===*/
+	/*==== Testando parametros de entrada ===*/
 	if (argc <= 1)
 	{
 		printf(">>Utilize: <%s> -f<nome_do_arquivo> para executar o programa\n\n", argv[0]);
@@ -54,7 +59,7 @@ int main(int argc, char **argv)
 		sscanf(argv[1], "%*[-f]%s", filename); 
 
 	/*==== Checando integridade do arquivo ===*/
-	arquivo = fopen(filename, "r");
+	arquivo = fopen(filename, "rb");
 	if (arquivo == NULL)
 	{
 		fprintf(stderr, ">>ERRO: nao consegui abrir o arquivo %s\n", filename);
@@ -69,40 +74,45 @@ int main(int argc, char **argv)
 		if (strcmp(primPalavra, "Sentence") == 0)
 			Nsnt = i;
 	}
-	fclose(arquivo);
 	/* inicializando o vetor de sentencas */
 	initSentence(Nsnt);
 	
 	/*==== Adquirindo informacoes para a tabela de simbolos ===*/
-	arquivo = fopen(filename, "r");
-	while (fgets(linha, BUFFER, arquivo))
+	rewind(arquivo);
+	/*arquivo = fopen(filename, "r");*/
+	while (fgets(linha, BUFFER, arquivo) != NULL)
 	{
+		/*limpando primPalavra*/
 		strcpy(primPalavra, " ");
 
 		/* extraindo informacoes relativas a sentencas */
 		sscanf(linha, "%s #%d (%d", primPalavra, &i, &j);
 		if (strcmp(primPalavra, "Sentence") == 0)
 		{
-			Ntkn += j;
-			strcpy(id, linha); /* salvando o id da sentenca */
-			strcpy(frase, " ");
+			Ntkn += j; /*atualiza numero de tokens*/
+			
+			/* encontrando o id da sentenca */
+			id[1] = ftell(arquivo);
+			id[0] = id[1] - strlen(linha);			
+	
+			/* encontrando a frase da sentenca */
 			fgets(linha, BUFFER, arquivo);
-			sscanf(linha, "%s", copia);	
-
-			/* salvando a frase da sentenca */
+			sscanf(linha, "%s", copia);
+			frase[0] = ftell(arquivo) - strlen(linha);	
 			while (strcmp(copia, "[Text=") != 0)
 			{
-				strcat(frase, linha);
-				strcat(frase, " ");
+				frase[1] = ftell(arquivo);
 				fgets(linha, BUFFER, arquivo);
 				sscanf(linha, "%s", copia);
 				copia[6] = '\0';
 			}
-			frase[strlen(frase)-1] = '\0';
 
-			/* inserindo a sentenca completa no vetor 
-			   sendo linha -> sentenca anotada */
-			insertSentence(i-1, id, frase, linha);
+			/* encontrando a sentenca anotada */
+			info[1] = ftell(arquivo);
+			info[0] = info[1] - strlen(linha);
+
+			/* inserindo a sentenca completa no vetor */ 
+			insertSentence(i-1, id, frase, info);
 		}
 
 		/*==== Construindo chaves da tabela de simbolos ===*/
@@ -122,28 +132,33 @@ int main(int argc, char **argv)
 						if (isalpha(primPalavra[0]))
 							Npal++;
 						break;
-					case 2: /* caractere de posicao inicial */
+					/*case 2: 
 						strcpy(temp[1], primPalavra); 
 						break;
-					case 3: /* caractere de posicao final */
+					case 3: caractere de posicao final
 						strcpy(temp[2], primPalavra); 
-						break;
+						break;*/
 					case 0: /* lema */
-						strcpy(temp[3], primPalavra);
+						strcpy(temp[1], primPalavra);
 						break;
 					default: 
 						break;
 				}
 
-				/* salvando as informacoes nas tabelas de palavra e lema */
+				/* salvando as informacoes nas tabelas de palavra(t1) e lema(t2) */
 				if (k % 5 == 0) 
 				{
 					strcpy(copia, " ");
 					strcpy(copia, temp[0]);
-					insertPalST(lowerCase(copia), buildVal(temp[0], temp[3], 
-								atoi(temp[1]), atoi(temp[2]), i-1));
-					insertLemST(temp[3], buildVal(temp[0], temp[3], atoi(temp[1]), 
-								atoi(temp[2]), i-1));
+					
+					ST_t1_insert(buildVal(temp[0], temp[1], i-1));
+
+
+/* 					insertPalST(lowerCase(copia), buildVal(temp[0], temp[3], 
+ * 								atoi(temp[1]), atoi(temp[2]), i-1));
+ * 					insertLemST(temp[3], buildVal(temp[0], temp[3], atoi(temp[1]), 
+ * 								atoi(temp[2]), i-1));
+ */
 				}
 				token = strtok(NULL, " ");
 			}
@@ -173,36 +188,42 @@ int main(int argc, char **argv)
 			   "sua opcao: ");
 		/* recebe opcao do usuario */
 		fgets(linha, 256, stdin);
-		sscanf(linha, "%s %s", id, primPalavra);
+		sscanf(linha, "%s %s", opcao, primPalavra);
 	
 		/* faz o hash do id devolvendo um composto de numeros primos (id unico) para o switch */
 		if (strcmp(primPalavra, " ") != 0)
 		{
-			switch(hash(id))
+			switch(hash(opcao))
 			{
 				case 6: /*opcao -e*/
 					strcpy(copia, primPalavra);
-					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 0);
+/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 0);
+ */
 					break;
 				case 10: /*opcao -a*/
 					strcpy(copia, primPalavra);
-					printValorLem(searchLemST(lowerCase(copia)), 0);
+/* 					printValorLem(searchLemST(lowerCase(copia)), 0);
+ */
 					break;
 				case 42: /*opcao -ev*/
 					strcpy(copia, primPalavra);
-					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 1);
+/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 1);
+ */
 					break;
 				case 66: /*opcao -eV*/
 					strcpy(copia, primPalavra);
-					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 2);
+/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 2);
+ */
 					break;
 				case 70: /*opcao -av*/
 					strcpy(copia, primPalavra);
-					printValorLem(searchLemST(lowerCase(copia)), 1);
+/* 					printValorLem(searchLemST(lowerCase(copia)), 1);
+ */
 					break;
 				case 110: /*opcao -aV*/
 					strcpy(copia, primPalavra);
-					printValorLem(searchLemST(lowerCase(copia)), 2);
+/* 					printValorLem(searchLemST(lowerCase(copia)), 2);
+ */
 					break;
 				default:
 					printf("Desculpe, nao entendi...\n");
@@ -212,22 +233,26 @@ int main(int argc, char **argv)
 		/* hash das opcoes que nao dependem de palavra */
 		else if (strcmp(primPalavra, " ") == 0)
 		{
-			switch(hash(id))
+			switch(hash(opcao))
 			{
 				case 26: /*sair do programa*/
 					k = 0;
 					break;
 				case 34: /*opcao -t*/
-					chavePalST(0);
+/* 					chavePalST(0);
+ */
 					break;
 				case 38: /*opcao -d*/
-					chavePalST(1);
+/* 					chavePalST(1);
+ */
 					break;
 				case 46: /*opcao -l*/
-					chaveLemST(0);
+/* 					chaveLemST(0);
+ */
 					break;
 				case 58: /*opcao -L*/
-					chaveLemST(1);
+/* 					chaveLemST(1);
+ */
 					break;
 				case 62: /*opcao -s*/
 					printf("-----------------------------------\n"
@@ -244,6 +269,7 @@ int main(int argc, char **argv)
 						   contaValDistST(0),
 						   contaValDistST(1),
 						   contaValDistST(2));
+
 					break;
 				default:
 					printf("Desculpe, nao entendi...\n");
