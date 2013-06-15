@@ -9,8 +9,8 @@ CC=gcc
 #=================================================
 #
 # NAO ESQUECER DE MODULARIZAR TUDO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ep4encenc: main.o t1enc.o
-	$(CC) $(CFLAGS) t1enc.o main.o -o ep4encenc -lm && rm *.o
+ep4encenc: main.o t1enc.o t_aux.o
+	$(CC) $(CFLAGS) t1enc.o t_aux.o main.o -o ep4encenc -lm 
 
 #ep4enclp: main.o t1enc.o t2lp.o
 #	$(CC) $(CFLAGS) t1enc.o t2lp.o main.o -o ep4enclp -lm && rm *.o
@@ -24,6 +24,9 @@ ep4encenc: main.o t1enc.o
 main.o: main.c interface.h
 	$(CC) $(CFLAGS) -c main.c
 
+t_aux.o: t_aux.c interface.h
+	$(CC) $(CFLAGS) -c t_aux.c
+
 t1enc.o: t1enc.c interface.h
 	$(CC) $(CFLAGS) -c t1enc.c
 
@@ -36,3 +39,5 @@ t1enc.o: t1enc.c interface.h
 #t2lp.o: t2lp.c interface.h
 #	$(CC) $(CFLAGS) -c t2lp.c
 
+clean:
+	rm *.o

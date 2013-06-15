@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 	/*==== Testando parametros de entrada ===*/
 	if (argc <= 1)
 	{
-		printf(">>Utilize: <%s> -f<nome_do_arquivo> para executar o programa\n\n", argv[0]);
+		printf(">> Utilize: <%s> -f<nome_do_arquivo> para executar o programa\n\n", argv[0]);
 		exit (EXIT_FAILURE);
 	}
 	else
@@ -62,10 +62,10 @@ int main(int argc, char **argv)
 	arquivo = fopen(filename, "rb");
 	if (arquivo == NULL)
 	{
-		fprintf(stderr, ">>ERRO: nao consegui abrir o arquivo %s\n", filename);
+		fprintf(stderr, ">> ERRO: nao consegui abrir o arquivo %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
-	fprintf(stdout, "\n>>Abrindo o arquivo < %s >...\n\n", filename);
+	fprintf(stdout, "\n>> Abrindo o arquivo < %s >...\n\n", filename);
 	
 	/*==== Adquirindo o numero total de sentencas ===*/
 	while (fgets(linha, BUFFER, arquivo) != NULL)
@@ -74,8 +74,9 @@ int main(int argc, char **argv)
 		if (strcmp(primPalavra, "Sentence") == 0)
 			Nsnt = i;
 	}
-	/* inicializando o vetor de sentencas */
+	/* inicializando o vetor de sentencas e as STs */
 	initSentence(Nsnt);
+	ST_t1_init();
 	
 	/*==== Adquirindo informacoes para a tabela de simbolos ===*/
 	rewind(arquivo);
@@ -93,12 +94,12 @@ int main(int argc, char **argv)
 			
 			/* encontrando o id da sentenca */
 			id[1] = ftell(arquivo);
-			id[0] = id[1] - strlen(linha);			
+			id[0] = id[1] - strlen(linha);
 	
 			/* encontrando a frase da sentenca */
 			fgets(linha, BUFFER, arquivo);
 			sscanf(linha, "%s", copia);
-			frase[0] = ftell(arquivo) - strlen(linha);	
+			frase[0] = ftell(arquivo) - strlen(linha);
 			while (strcmp(copia, "[Text=") != 0)
 			{
 				frase[1] = ftell(arquivo);
@@ -106,7 +107,6 @@ int main(int argc, char **argv)
 				sscanf(linha, "%s", copia);
 				copia[6] = '\0';
 			}
-
 			/* encontrando a sentenca anotada */
 			info[1] = ftell(arquivo);
 			info[0] = info[1] - strlen(linha);
@@ -162,10 +162,9 @@ int main(int argc, char **argv)
 				}
 				token = strtok(NULL, " ");
 			}
-
+			printf("-----------------\n");
 		}
 	}
-	fclose(arquivo);
 	k = 1; /* para garantir... */
 
 	/*==== MENU ===*/
@@ -193,12 +192,10 @@ int main(int argc, char **argv)
 		/* faz o hash do id devolvendo um composto de numeros primos (id unico) para o switch */
 		if (strcmp(primPalavra, " ") != 0)
 		{
-			switch(hash(opcao))
+			switch(hashOption(opcao))
 			{
 				case 6: /*opcao -e*/
-					strcpy(copia, primPalavra);
-/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 0);
- */
+					printValorPal(ST_t1_search(primPalavra), arquivo, 0);
 					break;
 				case 10: /*opcao -a*/
 					strcpy(copia, primPalavra);
@@ -206,14 +203,10 @@ int main(int argc, char **argv)
  */
 					break;
 				case 42: /*opcao -ev*/
-					strcpy(copia, primPalavra);
-/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 1);
- */
+					printValorPal(ST_t1_search(primPalavra), arquivo, 1);
 					break;
 				case 66: /*opcao -eV*/
-					strcpy(copia, primPalavra);
-/* 					printValorPal(searchPalST(lowerCase(copia)), primPalavra, 2);
- */
+					printValorPal(ST_t1_search(primPalavra), arquivo, 2);
 					break;
 				case 70: /*opcao -av*/
 					strcpy(copia, primPalavra);
@@ -233,7 +226,7 @@ int main(int argc, char **argv)
 		/* hash das opcoes que nao dependem de palavra */
 		else if (strcmp(primPalavra, " ") == 0)
 		{
-			switch(hash(opcao))
+			switch(hashOption(opcao))
 			{
 				case 26: /*sair do programa*/
 					k = 0;
@@ -266,9 +259,9 @@ int main(int argc, char **argv)
 						   "-> Total de lemas distintos: %d\n"
 						   "-----------------------------------\n\n",
 						   Nsnt, Ntkn, Npal,
-						   contaValDistST(0),
-						   contaValDistST(1),
-						   contaValDistST(2));
+						   ST_t1_count(0),
+						   ST_t1_count(1),
+						   ST_t1_count(1)); /*TA ERRADO, é ST_t2_count()!!!!!*/
 
 					break;
 				default:
@@ -280,6 +273,7 @@ int main(int argc, char **argv)
 			printf("Desculpe, nao entendi...\n");
 	}
 	/*Saindo... do programa*/
-	printf("\n>>Saindo...\n\n");
+	fclose(arquivo);
+	printf("\n>> Saindo...\n\n");
 	return 0;
 }

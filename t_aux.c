@@ -11,29 +11,22 @@
 #include <string.h>
 #include <stdint.h>
 #include "interface.h"
+#define BUFFER 65536
 
-/*========= Definicao de tipos e structs ===========*/
 
-/*Node: define um no da arvore LLRBT. Guarda uma chave, um
-  Valor, ponteiros para os filhos esquerdo e direito, numero
-  de nos herdeiros e cor do no (vermelha ou preta)*/
-typedef struct node
+
+
+
+/*Sentenca: guarda o id, a frase e a sentenca anotada (info)*/
+typedef struct sentenca
 {
-	char *chave;
-	Valor *val;
-	struct node *esquerda;
-	struct node *direita;
-	int filhos;
-	int cor;
-} Node;
-
+	int id[2];
+	int frase[2];
+	int info[2];
+} Sentenca;
 
 /*========= Variaveis privadas ======================*/
-static Node *rootPalavra;  /*raiz da arvore de palavras*/
-static Node *rootLemma;    /*raiz da arvore de lemas*/
-static Sentenca *sentences;/*vetor de sentencas*/
-static int cnt;            /*contador para recursao*/
-
+static Sentenca *sentences; /*guarda posicoes do id, frase e sent. anotada no STREAM*/ 
 
 /*========= Implementacao das funcoes ===============*/
 /*===================================================*/
@@ -72,10 +65,9 @@ int comparaString(const void *stringA, const void *stringB)
 char* lowerCase(char *palavra)
 {
 	int i;
-	char minscula[32];
 	for (i = 0; palavra[i] != '\0'; i++)
-		minuscula[i] = tolower(palavra[i]);
-	return minuscula;
+		palavra[i] = tolower(palavra[i]);
+	return palavra;
 }
 
 /* 
@@ -87,7 +79,7 @@ char* lowerCase(char *palavra)
  * =====================================================================================
  */
 
-int hash(char *opcao)
+int hashOption(char *opcao)
 {
 	int i = 0, codigo = 1;
 	char c = opcao[i];
@@ -121,19 +113,19 @@ int hash(char *opcao)
                   indicadores de posicao inicial e final no texto, e id da sentenca.
  * =====================================================================================
  */
-Valor* buildVal(char *palavra, char *lemma, int ini, int fim, int sent_id)
+Valor* buildVal(char *palavra, char *lema, int sent_id)
 {
+	/*aloca espaco para atributos de Valor*/
 	char *pal = malloc((strlen(palavra)+1) * sizeof(char));
-	char *lem = malloc((strlen(lemma)+1) * sizeof(char));
+	char *lem = malloc((strlen(lema)+1) * sizeof(char));
 	Valor *val = malloc(sizeof *val);
+	/*salva atributos dados*/
 	strcpy(pal, palavra);
-	strcpy(lem, lemma);
+	strcpy(lem, lema);
 	val->palavra = pal;
-	val->lemma = lem;
-	val->loc_ini = ini;
-	val->loc_fim = fim;
+	val->lema = lem;
 	val->sentenca = sent_id;
-	val->prox = NULL;
+	val->prox = val->ant = val;
 	return val;
 }
 
@@ -146,29 +138,25 @@ Valor* buildVal(char *palavra, char *lemma, int ini, int fim, int sent_id)
 				  modo 2: conf. printSentence em modo 2.
  * =====================================================================================
  */
-void printValorPal(Valor *val, char *palavra, int modo)
+void printValorPal(Valor *val, FILE* arquivo, int modo)
 {
 	Valor *t = val;
-	int i = 0, frase_id = -1;
+	int frase_id = -1;
 
+	/*caso a chave nao exista*/
 	if (t == NULL)
 		printf("Nenhum resultado encontrado\n");
-	while (t != NULL)
+	/*verificando as ocorrencias na fila e imprimindo*/
+	do
 	{
-		if (strcmp(t->palavra, palavra) == 0)
+		if (t->sentenca != frase_id)
 		{
-			if (t->sentenca != frase_id)
-			{
-				printSentence(t->sentenca, modo);
-				printf("\n");
-			}
-			i++;
+			printSentence(t->sentenca, modo, arquivo);
+			printf("\n");
 		}
 		frase_id = t->sentenca;
 		t = t->prox;
-	}
-	if (i == 0 && val != NULL)
-		printf("Nenhum resultado encontrado\n");
+	} while (t != val);
 	printf("\n");
 }
 
@@ -182,12 +170,13 @@ void printValorPal(Valor *val, char *palavra, int modo)
 				  modo 3: imprime lema e suas derivacoes.
  * =====================================================================================
  */
-void printValorLem(Valor *val, int modo)
+void printValorLem(Valor *val, FILE* arquivo, int modo)
 {
 	char **pal;
 	int i = 0, j, k, frase_id = -1;
 	Valor *t = val;
 
+	/*caso a chave nao exista*/
 	if (t == NULL)
 		printf("Nenhum resultado encontrado\n");
 
@@ -199,10 +188,11 @@ void printValorLem(Valor *val, int modo)
 			i++;
 			t = t->prox;
 		}
+		/*criando vetor de candidatos para comparacao*/
 		pal = malloc(i * sizeof(char*));
-		t = val;
 		j = 0;
 		printf(" -->");
+		/*procurando derivacoes do lema*/
 		while (t != NULL)
 		{
 			k = 0;
@@ -229,7 +219,7 @@ void printValorLem(Valor *val, int modo)
 		{
 			if (t->sentenca != frase_id) 
 			{
-				printSentence(t->sentenca, modo);
+				printSentence(t->sentenca, modo, arquivo);
 				printf("\n");
 			}
 			frase_id = t->sentenca;
@@ -286,77 +276,65 @@ void insertSentence(int pos, int *id, int *frase, int *info)
  */
 void printSentence(int num, int modo, FILE* arquivo)
 {
+	char resultado[BUFFER];
+
 	switch (modo)
 	{
-		case 0:	
-			printf("---->%s", sentences[num].frase);
+		case 0:
+			fseek(arquivo, sentences[num].frase[0], SEEK_SET);
+			printf("---->");
+			while(ftell(arquivo) < sentences[num].frase[1])
+			{
+				fgets(resultado, BUFFER, arquivo);
+				printf("%s", resultado);
+			}
 			break;
 		case 1:
-			printf("----> %s |-->%s", sentences[num].id, sentences[num].frase);
+			fseek(arquivo, sentences[num].id[0], SEEK_SET);
+			fgets(resultado, BUFFER, arquivo);
+			printf("---->%s", resultado);
+			fseek(arquivo, sentences[num].frase[0], SEEK_SET);	
+			printf("  |-->");
+			while(ftell(arquivo) < sentences[num].frase[1])
+			{
+				fgets(resultado, BUFFER, arquivo);
+				printf("%s", resultado);
+			}
 			break;
 		case 2:
-			printf("----> %s |-->%s |--> %s", sentences[num].id, sentences[num].frase, 
-				sentences[num].info);
-			break;
+			fseek(arquivo, sentences[num].id[0], SEEK_SET);
+			fgets(resultado, BUFFER, arquivo);
+			printf("---->%s", resultado);
+			fseek(arquivo, sentences[num].frase[0], SEEK_SET);	
+			printf("  |-->");
+			while(ftell(arquivo) < sentences[num].frase[1])
+			{
+				fgets(resultado, BUFFER, arquivo);
+				printf("%s", resultado);
+			}
+			fseek(arquivo, sentences[num].info[0], SEEK_SET);
+			fgets(resultado, BUFFER, arquivo);
+			printf("  |--> %s", resultado);
 		default:
 			break;	
 	}
 }
-/* funcao SUPER-HASH */
-#undef get16bits
-#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
-  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
-#define get16bits(d) (*((const uint16_t *) (d)))
-#endif
 
-#if !defined (get16bits)
-#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
-                       +(uint32_t)(((const uint8_t *)(d))[0]) )
-#endif
 
-uint32_t SuperFastHash (const char * data, int len) 
-{
-	uint32_t hash = len, tmp;
-	int rem;
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  hash
+ *  Description:  
+ * =====================================================================================
+ */
 
-    if (len <= 0 || data == NULL) return 0;
-
-    rem = len & 3;
-    len >>= 2;
-
-    /* Main loop */
-    for (;len > 0; len--) 
+int hash(char *palavra, int tableSize)
+{   
+	int h = 0, a = 127;
+	while (*palavra != '\0')
 	{
-        hash  += get16bits (data);
-        tmp    = (get16bits (data+2) << 11) ^ hash;
-        hash   = (hash << 16) ^ tmp;
-        data  += 2*sizeof (uint16_t);
-        hash  += hash >> 11;
-    }
-
-    /* Handle end cases */
-    switch (rem) {
-        case 3: hash += get16bits (data);
-                hash ^= hash << 16;
-                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
-                hash += hash >> 11;
-                break;
-        case 2: hash += get16bits (data);
-                hash ^= hash << 11;
-                hash += hash >> 17;
-                break;
-        case 1: hash += (signed char)*data;
-                hash ^= hash << 10;
-                hash += hash >> 1;
-    }
-
-    /* Force "avalanching" of final 127 bits */
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-
-    return hash;
+		h = (a * h + *palavra)%tableSize;
+		palavra++;
+	}
+	return h;
 }

@@ -5,19 +5,11 @@
 /*||||| Arquivo: t2enc.c ||||||||||||||||||||||||||*/
 /*=================================================*/
 
-/*========= OBS. ==================================*/
-/* Os algoritmos de LLRBT foram quase integralmente
- baseados no livro "Algorithms", de SEDGEWICK, R. & WAYNE, K.,
- e posteriormente adaptados para a linguagem C, 
- ressalvando, e' claro, as particularidades deste EP3 */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "LLRBT.h"
-#define	RED 1	/*cor vermelha do node*/
-#define	BLACK 0	/*cor preta do node*/
+#include "interface.h"
 
 
 /*========= Definicao de tipos e structs ===========*/
