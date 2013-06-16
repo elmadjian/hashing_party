@@ -68,6 +68,7 @@ static Valor* insertVal(Valor *ini, Valor *novo)
 static Node* newNode(Valor *val, Node *proximo)
 {
 	Node *novo = malloc(sizeof *novo);
+	novo->valor = NULL;
 	novo->valor = insertVal(novo->valor, val);
 	novo->prox = proximo;
 	return novo;
@@ -84,7 +85,7 @@ static Node* newNode(Valor *val, Node *proximo)
 static void remapeiaTabela()
 {
 	int i, j = 0, k;
-	Node *t;
+	Node *t, **novo;
 	Valor **tabela = malloc(N * sizeof(Valor*));	
 	static int pos = 0;
 	int primo[16] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
@@ -93,7 +94,7 @@ static void remapeiaTabela()
 	/*copia valores da tabela atual e libera ponteiros*/
 	for (i = 0; i < M; i++)
 	{
-		if(t2enc_head[i] != NULL && t2enc_head[i]->valor != NULL)
+		if(t2enc_head[i] != NULL)
 		{
 			t = t2enc_head[i];
 			while (t != NULL)
@@ -101,21 +102,21 @@ static void remapeiaTabela()
 				tabela[j++] = t->valor;
 				t = t->prox;
 			}
-			t2enc_head[i] = NULL;
 		}
 	}
 	
 	/*realoca memoria da tabela, reinicializa-a e redefine M*/
 	if (M < primo[pos])
 		M = primo[pos++];
-	t2enc_head = malloc(M * sizeof(Node));
+	novo = malloc(M * sizeof(Node));
 
 	/*remapeia os valores antigos*/
 	for (i = 0; i < j; i++)
 	{	
-		k = hash(tabela[i]->palavra, M);
-		t2enc_head[k] = newNode(tabela[i], t2enc_head[k]);
+		k = hash(tabela[i]->lema, M);
+		novo[k] = newNode(tabela[i], novo[k]);
 	}
+	t2enc_head = novo;
 }
 
 
@@ -124,7 +125,7 @@ static void remapeiaTabela()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t2_insert
- *  Description:  Insere um valor na tabela de simbolos t1 para o cliente. Utiliza
+ *  Description:  Insere um valor na tabela de simbolos t2 para o cliente. Utiliza
                   metodo de hashing por encadeamento e tem comportamento dinamico.
  * =====================================================================================
  */
@@ -134,14 +135,10 @@ void ST_t2_insert(Valor *val)
 	Node *p;
 	/*condicao para remapear os dados*/
 	if (N > M-1)
-	{
-		/*reinsert*/
-		printf("Remapeando a tabela de simbolos...\n");
 		remapeiaTabela();
-	}
+
 	i = hash(val->lema, M);
 	p = t2enc_head[i];
-
 	/*verifica se ha recorrencia de um valor e insere-o*/
 	while (p != NULL && p->valor != NULL)
 	{
@@ -154,7 +151,7 @@ void ST_t2_insert(Valor *val)
 	}
 	/*caso nao haja "match", insira no proximo node livre*/
 	if (p == NULL) 
-	{
+	{	
 		t2enc_head[i] = newNode(val, t2enc_head[i]);
 		if (isalpha(val->lema[0]))
 			L++;
@@ -166,7 +163,8 @@ void ST_t2_insert(Valor *val)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  searchRec
- *  Description:  Funcao de busca recursiva na LLRBT.
+ *  Description:  Funcao de busca recursiva que verifica se um lema contido num Node
+                  corresponde ao lema procurado.
  * =====================================================================================
  */
 static Valor* searchRec(Node *x, char *chave)
@@ -188,9 +186,9 @@ static Valor* searchRec(Node *x, char *chave)
 Valor* ST_t2_search(char *chave)
 {
 	Valor *temp = ST_t1_search(chave);
-	if (temp == NULL)
-		return NULL;
-	return searchRec(t2enc_head[hash(temp->lema, M)], temp->lema);
+	if (temp != NULL)
+		return searchRec(t2enc_head[hash(temp->lema, M)], temp->lema);
+	return searchRec(t2enc_head[hash(chave, M)], chave);
 }
 
 
@@ -203,7 +201,7 @@ Valor* ST_t2_search(char *chave)
 void ST_t2_init()
 {
 	N = 0;
-	M = 193; /*primo mais proximo de 2^7*/
+	M = 193; /*193 = primo mais proximo de 2^7*/
 	t2enc_head = malloc(M * sizeof(Node));
 }
 
@@ -245,7 +243,6 @@ void ST_t2_list(int modo)
 		if(t2enc_head[i] != NULL)
 			listRec(t2enc_head[i], tokens);
 	}
-	printf("cnt: %d\n", cnt);
 	qsort(tokens, cnt, sizeof(tokens[0]), comparaString);
 	
 	if (modo == 1)

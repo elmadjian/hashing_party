@@ -86,7 +86,7 @@ static Node* newNode(Valor *val, Node *proximo)
 static void remapeiaTabela()
 {
 	int i, j = 0, k;
-	Node *t;
+	Node *t, **novo;
 	Valor **tabela = malloc(N * sizeof(Valor*));	
 	static int pos = 0;
 	int primo[16] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
@@ -95,7 +95,7 @@ static void remapeiaTabela()
 	/*copia valores da tabela atual e libera ponteiros*/
 	for (i = 0; i < M; i++)
 	{
-		if(t1enc_head[i] != NULL && t1enc_head[i]->valor != NULL)
+		if(t1enc_head[i] != NULL)
 		{
 			t = t1enc_head[i];
 			while (t != NULL)
@@ -103,21 +103,21 @@ static void remapeiaTabela()
 				tabela[j++] = t->valor;
 				t = t->prox;
 			}
-			t1enc_head[i] = NULL;
 		}
 	}
 	
 	/*realoca memoria da tabela, reinicializa-a e redefine M*/
 	if (M < primo[pos])
 		M = primo[pos++];
-	t1enc_head = malloc(M * sizeof(Node));
+	novo = malloc(M * sizeof(Node));
 
 	/*remapeia os valores antigos*/
 	for (i = 0; i < j; i++)
 	{	
 		k = hash(tabela[i]->palavra, M);
-		t1enc_head[k] = newNode(tabela[i], t1enc_head[k]);
+		novo[k] = newNode(tabela[i], novo[k]);
 	}
+	t1enc_head = novo;
 }
 
 
@@ -195,7 +195,7 @@ Valor* ST_t1_search(char *chave)
 void ST_t1_init()
 {
 	N = 0;
-	M = 193; /*primo mais proximo de 2^7*/
+	M = 193; /*193 = primo mais proximo de 2^7*/
 	t1enc_head = malloc(M * sizeof(Node));
 }
 
@@ -243,7 +243,6 @@ void ST_t1_list(int modo)
 		if(t1enc_head[i] != NULL)
 			listRec(t1enc_head[i], tokens, modo);
 	}
-	printf("cnt: %d\n", cnt);
 	qsort(tokens, cnt, sizeof(tokens[0]), comparaString);
 	for (i = 0; i < cnt; i++)
 		printf("%s\n", tokens[i]);	
@@ -294,33 +293,3 @@ int ST_t1_count(int modo)
 	free (temp);
 	return 0;
 }
-
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  contaValDistST
- *  Description:  Devolve uma lista de valores distintos para tokens, palavras e lemas.
-                  modo 0: tokens distintos.
-				  modo 1: palavras distintas.
-				  modo 2: lemas distintos.
- * =====================================================================================
- */
-/* int contaValDistST(int modo)
- * {
- * 	char **temp = malloc(rootPalavra->filhos * sizeof(char*));
- * 	switch(modo)
- * 	{
- * 		case 0:
- * 			return rootPalavra->filhos;
- * 		case 1:
- * 			cnt = 0;
- * 			chavesRec(rootPalavra, temp, 1);
- * 			return cnt;
- * 		case 2:
- * 			return rootLemma->filhos;
- * 
- * 	}
- * 	return 0;
- * }
- */
-

@@ -125,7 +125,8 @@ Valor* buildVal(char *palavra, char *lema, int sent_id)
 	val->palavra = pal;
 	val->lema = lem;
 	val->sentenca = sent_id;
-	val->prox = val->ant = val;
+	val->prox = val;
+	val->ant = val;
 	return val;
 }
 

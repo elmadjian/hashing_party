@@ -38,9 +38,7 @@ int main(int argc, char **argv)
 	char filename[32];
 	char opcao[32];
 	char primPalavra[256];
-	/*char id[256];*/
 	char copia[256];
-	/*char frase[BUFFER];*/
 	char linha[BUFFER];
 	char temp[2][256];
 	int i, j, k, Nsnt, Ntkn = 0, Npal = 0;
@@ -117,7 +115,7 @@ int main(int argc, char **argv)
 		}
 
 		/*==== Construindo chaves da tabela de simbolos ===*/
-		if (linha[0] == '[')
+		if (strcmp(copia, "[Text=") == 0)
 		{
 			k = 0;
 			token = strtok(linha, " ");
