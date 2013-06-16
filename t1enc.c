@@ -21,16 +21,17 @@
 typedef struct node
 {
 	Valor *valor;
-	int n;
 	struct node *prox;
 } Node;
 
 
 /*========================= Variaveis privadas =======================================*/
 /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-static Node **t1enc_head;   /*inicio da tabela*/
+static Node **t1enc_head;  /*inicio da tabela*/
 static int M;			   /*numero de entradas disponiveis na tabela*/
 static int N;              /*numero de entradas preenchidas na tabela*/
+static int P = 0;          /*numero de palavras inseridas*/
+static int cnt;            /*contador para funcoes recursivas*/
 
 
 
@@ -44,7 +45,7 @@ static int N;              /*numero de entradas preenchidas na tabela*/
                   de entrada por motivos de performance.
  * =====================================================================================
  */
-Valor* insertVal(Valor *ini, Valor *novo)
+static Valor* insertVal(Valor *ini, Valor *novo)
 {
 	Valor *p;
 	/*caso a lista esteja vazia, novo inicia a lista*/	
@@ -59,40 +60,67 @@ Valor* insertVal(Valor *ini, Valor *novo)
 	return ini;
 }
 
-
-
-
-
-
-
-
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  size
- *  Description:  Devolve o numero de filhos de um no (contando com ele mesmo).
- * =====================================================================================
- */
-int ST_t1_count(int modo)
-{
-	return N;
-}
-
-
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  newNode
  *  Description:  Cria um novo no que recebe uma palavra "chave", um Valor e uma cor.
  * =====================================================================================
  */
-Node* newNode(Valor *val, Node *proximo)
+static Node* newNode(Valor *val, Node *proximo)
 {
 	Node *novo = malloc(sizeof *novo);
 	novo->valor = insertVal(novo->valor, val);
-	novo->n = 1;
 	novo->prox = proximo;
 	return novo;
 }
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  remapeiaTabela
+ *  Description:  Funcao que cuida do remapeamento dos dados quando N se aproxima
+                  de um valor critico. Para isso, a funcao dobra (aproximadamente) o
+				  tamanho da tabela atual e faz um novo hash dos dados ja inseridos.
+ * =====================================================================================
+ */
+
+static void remapeiaTabela()
+{
+	int i, j = 0, k;
+	Node *t;
+	Valor **tabela = malloc(N * sizeof(Valor*));	
+	static int pos = 0;
+	int primo[16] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
+		98317, 196613, 393241, 786433, 1572869, 3145739, 6291469, 12582917};
+	
+	/*copia valores da tabela atual e libera ponteiros*/
+	for (i = 0; i < M; i++)
+	{
+		if(t1enc_head[i] != NULL && t1enc_head[i]->valor != NULL)
+		{
+			t = t1enc_head[i];
+			while (t != NULL)
+			{
+				tabela[j++] = t->valor;
+				t = t->prox;
+			}
+			t1enc_head[i] = NULL;
+		}
+	}
+	
+	/*realoca memoria da tabela, reinicializa-a e redefine M*/
+	if (M < primo[pos])
+		M = primo[pos++];
+	t1enc_head = malloc(M * sizeof(Node));
+
+	/*remapeia os valores antigos*/
+	for (i = 0; i < j; i++)
+	{	
+		k = hash(tabela[i]->palavra, M);
+		t1enc_head[k] = newNode(tabela[i], t1enc_head[k]);
+	}
+}
+
+
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -106,14 +134,9 @@ void ST_t1_insert(Valor *val)
 	int i;
 	Node *p;
 	/*condicao para remapear os dados*/
-	if (N > M/2)
-	{
-		/*reinsert*/
-		printf("xi, estourou o limite!\n");
-		exit(EXIT_FAILURE);
-	}
+	if (N > M-1)
+		remapeiaTabela();
 	i = hash(val->palavra, M);
-	printf("%s->%d\n",val->palavra, i);
 	p = t1enc_head[i];
 
 	/*verifica se ha recorrencia de um valor e insere-o*/
@@ -122,7 +145,6 @@ void ST_t1_insert(Valor *val)
 		if (strcmp(p->valor->palavra, val->palavra) == 0)
 		{
 			p->valor = insertVal(p->valor, val);
-			p->n++;	
 			break;
 		}
 		p = p->prox;
@@ -130,6 +152,8 @@ void ST_t1_insert(Valor *val)
 	/*caso nao haja "match", insira no proximo node livre*/
 	if (p == NULL)
 		t1enc_head[i] = newNode(val, t1enc_head[i]);
+	if (isalpha(val->palavra[0]))
+		P++;
 	N++;
 }
 
@@ -140,7 +164,7 @@ void ST_t1_insert(Valor *val)
  *  Description:  Funcao de busca recursiva na LLRBT.
  * =====================================================================================
  */
-Valor* searchRec(Node *x, char *chave)
+static Valor* searchRec(Node *x, char *chave)
 {
 	if (x == NULL) 
 		return NULL;
@@ -178,90 +202,98 @@ void ST_t1_init()
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  chavesRec
+ *         Name:  listRec
  *  Description:  Devolve todos os tokens ou palavras encontradas na LLRBT.
                   modo 0: tokens.
 				  modo 1: palavras.
  * =====================================================================================
  */
-/* void chavesRec(Node *raiz, char **tokens, int modo)
- * {
- * 	if (raiz != NULL)
- * 	{
- * 		chavesRec(raiz->esquerda, tokens, modo);
- * 		chavesRec(raiz->direita, tokens, modo);
- * 		if (modo == 0)
- * 			tokens[cnt++] = raiz->chave;
- * 		else if (modo == 1)
- * 		{
- * 			if (isalpha(raiz->chave[0]))
- * 				tokens[cnt++] = raiz->chave;
- * 		}
- * 	}
- * }
- */
+static void listRec(Node *x, char **tokens, int modo)
+{
+	if (modo == 0)
+		tokens[cnt++] = x->valor->palavra;
+	else if (modo == 1)
+	{
+		if (isalpha(x->valor->palavra[0]))
+			tokens[cnt++] = x->valor->palavra;
+	}
+	if (x->prox != NULL)
+		listRec(x->prox, tokens, modo);
+}
+
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  chavePalST
+ *         Name:  ST_t1_list
  *  Description:  Devolve lista de tokens ou palavras para o cliente.
                   modo 0: tokens.
 				  modo 1: palavras.
  * =====================================================================================
  */
 
-/* void chavePalST(int modo) 
- * {
- * 	char **tokens;
- * 	int i, tam = rootPalavra->filhos;
- * 
- * 	cnt = 0;
- * 	tokens = malloc(tam * sizeof(char*));
- * 	chavesRec(rootPalavra, tokens, modo);
- * 
- * 	qsort(tokens, cnt, sizeof(tokens[0]), comparaString);
- * 	for (i = 0; i < cnt; i++)
- * 		printf("%s\n", tokens[i]);	
- * 	printf("\n");
- * 	free(tokens);
- * }
- */
+void ST_t1_list(int modo) 
+{
+	char **tokens;
+	int i;
+
+	cnt = 0;
+	tokens = malloc(N * sizeof(char*));
+	for (i = 0; i < M; i++)
+	{
+		if(t1enc_head[i] != NULL)
+			listRec(t1enc_head[i], tokens, modo);
+	}
+	printf("cnt: %d\n", cnt);
+	qsort(tokens, cnt, sizeof(tokens[0]), comparaString);
+	for (i = 0; i < cnt; i++)
+		printf("%s\n", tokens[i]);	
+	printf("\n");
+	free(tokens);
+}
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  chaveLemST
- *  Description:  Devolve lista de lemas ou lemas+derivacoes para o cliente.
-                  modo 0: lemas.
-				  modo 1: lemas+derivacoes.
+ *         Name:  ST_t1_count
+ *  Description:  Devolve o numero correspondete 'a quantidade de alguns valores da 
+                  tabela de simbolos a serem especificados pelo usuario.
+				  modo 0: numero de tokens.
+				  modo 1: numero de palavras.
+				  modo 2: numero de tokens distintos.
+				  modo 3: numero de palavras distintas.
  * =====================================================================================
  */
-/* void chaveLemST(int modo)
- * {
- * 	char **tokens;
- * 	int i, tam = rootLemma->filhos;
- * 
- * 	cnt = 0;
- * 	tokens = malloc(tam * sizeof(char*));
- * 	chavesRec(rootLemma, tokens, 0);
- * 	qsort(tokens, tam, sizeof(tokens[0]), comparaString);
- * 
- * 	if (modo == 1)
- * 	{
- * 		for (i = 0; i < tam; i++)
- * 		{
- * 			printf("%s ", tokens[i]);
- * 			printValorLem(searchRec(rootLemma, tokens[i]), 3);
- * 		}
- * 	}
- * 	else
- * 	{
- * 		for (i = 0; i < tam; i++)
- * 			printf("%s\n", tokens[i]);	
- * 	}
- * 	printf("\n");
- * 	free(tokens);
- * }
- */
+int ST_t1_count(int modo)
+{
+	int i;
+	char **temp = malloc(N * sizeof(char*));
+	switch(modo)
+	{
+		case 0:
+			return N;
+		case 1:
+			return P;
+		case 2:
+			cnt = 0;
+			for (i = 0; i < M; i++)
+			{
+				if (t1enc_head[i] != NULL)
+					listRec(t1enc_head[i], temp, 0);
+			}
+			return cnt;
+		case 3:
+			cnt = 0;
+			for (i = 0; i < M; i++)
+			{
+				if (t1enc_head[i] != NULL)
+					listRec(t1enc_head[i], temp, 1);
+			}
+			return cnt;
+		default:
+			break;
+	}
+	free (temp);
+	return 0;
+}
 
 
 /* 

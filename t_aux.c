@@ -170,7 +170,7 @@ void printValorPal(Valor *val, FILE* arquivo, int modo)
 				  modo 3: imprime lema e suas derivacoes.
  * =====================================================================================
  */
-void printValorLem(Valor *val, FILE* arquivo, int modo)
+void printValor(Valor *val, FILE* arquivo, int modo)
 {
 	char **pal;
 	int i = 0, j, k, frase_id = -1;
@@ -179,51 +179,53 @@ void printValorLem(Valor *val, FILE* arquivo, int modo)
 	/*caso a chave nao exista*/
 	if (t == NULL)
 		printf("Nenhum resultado encontrado\n");
-
-	/* imprime derivacoes do lema */
-	if (modo == 3)
-	{
-		while (t != NULL)
-		{
-			i++;
-			t = t->prox;
-		}
-		/*criando vetor de candidatos para comparacao*/
-		pal = malloc(i * sizeof(char*));
-		j = 0;
-		printf(" -->");
-		/*procurando derivacoes do lema*/
-		while (t != NULL)
-		{
-			k = 0;
-			pal[j] = t->palavra;
-			for (i = 0; i < j; i++)
-			{
-				if (strcmp(pal[i], t->palavra) == 0)
-				{
-					k = 1;
-					break;
-				}
-			}
-			if (k != 1)
-				printf(" %s", t->palavra);
-			j++;
-			t = t->prox;
-		}
-		free(pal);
-	}
-	/*imprime sentencas*/
 	else
 	{
-		while (t != NULL)
+		/* imprime derivacoes do lema */
+		if (modo == 3)
 		{
-			if (t->sentenca != frase_id) 
+			do
 			{
-				printSentence(t->sentenca, modo, arquivo);
-				printf("\n");
-			}
-			frase_id = t->sentenca;
-			t = t->prox;
+				i++;
+				t = t->prox;
+			} while (t != val);
+			/*criando vetor de candidatos para comparacao*/
+			pal = malloc(i * sizeof(char*));
+			j = 0;
+			printf(" -->");
+			/*procurando derivacoes do lema*/
+			do
+			{
+				k = 0;
+				pal[j] = t->palavra;
+				for (i = 0; i < j; i++)
+				{
+					if (strcmp(pal[i], t->palavra) == 0)
+					{
+						k = 1;
+						break;
+					}
+				}
+				if (k != 1)
+					printf(" %s", t->palavra);
+				j++;
+				t = t->prox;
+			} while (t != val);
+			free(pal);
+		}
+		/*imprime sentencas*/
+		else
+		{
+			do
+			{
+				if (t->sentenca != frase_id) 
+				{
+					printSentence(t->sentenca, modo, arquivo);
+					printf("\n");
+				}
+				frase_id = t->sentenca;
+				t = t->prox;
+			} while (t != val);
 		}
 	}
 	printf("\n");

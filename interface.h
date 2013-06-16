@@ -23,19 +23,21 @@ typedef struct valor
 /*====== prototipos das funcoes para o cliente ============ */
 
 void ST_t1_init(); 
-/*void ST_t2_init();*/
+void ST_t2_init();
 int ST_t1_count(int modo);
-/*int ST_t2_count();*/
+int ST_t2_count();
 void ST_t1_insert(); 
-/*void ST_t2_insert();*/
+void ST_t2_insert();
 Valor* ST_t1_search();
-/*Valor* ST_t2_search();*/
+Valor* ST_t2_search();
+void ST_t1_list(int modo);
+void ST_t2_list(int modo);
 
 
 
 /*manipulacao de valores (palavras, lemas, posicao da sentenca)*/
 Valor* buildVal(char *palavra, char *lema, int sent_id);
-void printValorPal(Valor *val, FILE* arquivo, int modo);
+void printValor(Valor *val, FILE* arquivo, int modo);
 /*void printValorLem(Node *val, int modo);*/
 
 /*manipulacao de tabelas de simbolos*/
@@ -53,6 +55,7 @@ void insertSentence(int pos, int *id, int *frase, int *info);
 void printSentence(int num, int modo, FILE* arquivo);
 
 /*funcoes de uso geral*/
+int comparaString(const void *stringA, const void *stringB);
 char* lowerCase(char *palavra);
 int hashOption(char *opcao);
 int hash(char *palavra, int tableSize);

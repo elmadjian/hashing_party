@@ -77,6 +77,7 @@ int main(int argc, char **argv)
 	/* inicializando o vetor de sentencas e as STs */
 	initSentence(Nsnt);
 	ST_t1_init();
+	ST_t2_init();
 	
 	/*==== Adquirindo informacoes para a tabela de simbolos ===*/
 	rewind(arquivo);
@@ -132,12 +133,6 @@ int main(int argc, char **argv)
 						if (isalpha(primPalavra[0]))
 							Npal++;
 						break;
-					/*case 2: 
-						strcpy(temp[1], primPalavra); 
-						break;
-					case 3: caractere de posicao final
-						strcpy(temp[2], primPalavra); 
-						break;*/
 					case 0: /* lema */
 						strcpy(temp[1], primPalavra);
 						break;
@@ -148,21 +143,11 @@ int main(int argc, char **argv)
 				/* salvando as informacoes nas tabelas de palavra(t1) e lema(t2) */
 				if (k % 5 == 0) 
 				{
-					strcpy(copia, " ");
-					strcpy(copia, temp[0]);
-					
 					ST_t1_insert(buildVal(temp[0], temp[1], i-1));
-
-
-/* 					insertPalST(lowerCase(copia), buildVal(temp[0], temp[3], 
- * 								atoi(temp[1]), atoi(temp[2]), i-1));
- * 					insertLemST(temp[3], buildVal(temp[0], temp[3], atoi(temp[1]), 
- * 								atoi(temp[2]), i-1));
- */
+					ST_t2_insert(buildVal(temp[0], temp[1], i-1));
 				}
 				token = strtok(NULL, " ");
 			}
-			printf("-----------------\n");
 		}
 	}
 	k = 1; /* para garantir... */
@@ -170,6 +155,7 @@ int main(int argc, char **argv)
 	/*==== MENU ===*/
 	while (k != 0)
 	{
+		printf("tokens: %d,  palavras: %d\n", Ntkn, Npal);
 		strcpy(primPalavra, " ");
 		printf("================================\n"
 			   "|             MENU             |\n"
@@ -195,28 +181,22 @@ int main(int argc, char **argv)
 			switch(hashOption(opcao))
 			{
 				case 6: /*opcao -e*/
-					printValorPal(ST_t1_search(primPalavra), arquivo, 0);
+					printValor(ST_t1_search(primPalavra), arquivo, 0);
 					break;
 				case 10: /*opcao -a*/
-					strcpy(copia, primPalavra);
-/* 					printValorLem(searchLemST(lowerCase(copia)), 0);
- */
+					printValor(ST_t2_search(primPalavra), arquivo, 0);
 					break;
 				case 42: /*opcao -ev*/
-					printValorPal(ST_t1_search(primPalavra), arquivo, 1);
+					printValor(ST_t1_search(primPalavra), arquivo, 1);
 					break;
 				case 66: /*opcao -eV*/
-					printValorPal(ST_t1_search(primPalavra), arquivo, 2);
+					printValor(ST_t1_search(primPalavra), arquivo, 2);
 					break;
 				case 70: /*opcao -av*/
-					strcpy(copia, primPalavra);
-/* 					printValorLem(searchLemST(lowerCase(copia)), 1);
- */
+					printValor(ST_t2_search(primPalavra), arquivo, 1);
 					break;
 				case 110: /*opcao -aV*/
-					strcpy(copia, primPalavra);
-/* 					printValorLem(searchLemST(lowerCase(copia)), 2);
- */
+					printValor(ST_t2_search(primPalavra), arquivo, 2);
 					break;
 				default:
 					printf("Desculpe, nao entendi...\n");
@@ -232,20 +212,16 @@ int main(int argc, char **argv)
 					k = 0;
 					break;
 				case 34: /*opcao -t*/
-/* 					chavePalST(0);
- */
+					ST_t1_list(0);
 					break;
 				case 38: /*opcao -d*/
-/* 					chavePalST(1);
- */
+					ST_t1_list(1);
 					break;
 				case 46: /*opcao -l*/
-/* 					chaveLemST(0);
- */
+					ST_t2_list(0);
 					break;
 				case 58: /*opcao -L*/
-/* 					chaveLemST(1);
- */
+					ST_t2_list(1);
 					break;
 				case 62: /*opcao -s*/
 					printf("-----------------------------------\n"
@@ -258,11 +234,12 @@ int main(int argc, char **argv)
 						   "-> Total de palavras distintas: %d\n"
 						   "-> Total de lemas distintos: %d\n"
 						   "-----------------------------------\n\n",
-						   Nsnt, Ntkn, Npal,
-						   ST_t1_count(0),
+						   Nsnt, 
+						   ST_t1_count(0), 
 						   ST_t1_count(1),
-						   ST_t1_count(1)); /*TA ERRADO, é ST_t2_count()!!!!!*/
-
+						   ST_t1_count(2),
+						   ST_t1_count(3),
+						   ST_t2_count());
 					break;
 				default:
 					printf("Desculpe, nao entendi...\n");
