@@ -4,21 +4,21 @@
 #||||| NUSP: 5685741 |||||||||||||||||||||||||||||
 #||||| Arquivo: makefile |||||||||||||||||||||||||
 #=================================================
-CFLAGS=-Wall -ansi -pedantic -g
+CFLAGS=-Wall -ansi -pedantic
 CC=gcc
 #=================================================
 #
 ep4encenc: main.o t1enc.o t2enc.o t_aux.o
-	$(CC) $(CFLAGS) t1enc.o t2enc.o t_aux.o main.o -o ep4encenc -lm 
+	$(CC) $(CFLAGS) t1enc.o t2enc.o t_aux.o main.o -o ep4encenc 
 
 ep4enclp: main.o t1enc.o t2lp.o t_aux.o
-	$(CC) $(CFLAGS) t1enc.o t2lp.o t_aux.o main.o -o ep4enclp -lm 
+	$(CC) $(CFLAGS) t1enc.o t2lp.o t_aux.o main.o -o ep4enclp 
 
 ep4lpenc: main.o t1lp.o t2enc.o t_aux.o
-	$(CC) $(CFLAGS) t1lp.o t2enc.o t_aux.o main.o -o ep4lpenc -lm
+	$(CC) $(CFLAGS) t1lp.o t2enc.o t_aux.o main.o -o ep4lpenc
 
 ep4lplp: main.o t1lp.o t2lp.o t_aux.o
-	$(CC) $(CFLAGS) t1lp.o t2lp.o t_aux.o main.o -o ep4lplp -lm
+	$(CC) $(CFLAGS) t1lp.o t2lp.o t_aux.o main.o -o ep4lplp
 
 main.o: main.c interface.h
 	$(CC) $(CFLAGS) -c main.c

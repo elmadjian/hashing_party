@@ -14,11 +14,8 @@
 
 /*========================= Definicao de tipos e structs =============================*/
 /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-
-
 /*Node: define um no' (ou entrada) da tabela de simbolos. Guarda uma 
-  chave do tipo char, uma lista do tipo Valor e a quantidade de objetos dessa 
-  chave (n)*/
+  chave do tipo Valor (uma fila circular sem cabeca de objetos identicos)*/
 typedef struct node
 {
 	Valor *valor;
@@ -27,7 +24,7 @@ typedef struct node
 
 /*========================= Variaveis privadas =======================================*/
 /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-static Node *t1lp_head;   /*inicio da tabela*/
+static Node *t1lp_head;    /*inicio da tabela*/
 static int M;			   /*numero de entradas disponiveis na tabela*/
 static int N;              /*numero de entradas preenchidas na tabela*/
 static int P = 0;          /*numero de palavras inseridas*/
@@ -40,8 +37,8 @@ static int P = 0;          /*numero de palavras inseridas*/
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  insertVal
- *  Description:  Insere um Valor novo numa lista do tipo Valor. Nao obedece ordem
-                  de entrada por motivos de performance.
+ *  Description:  Insere um Valor novo numa fila circular sem cabeca duplamente
+                  encadeada (para poder exibir os resultados em ordem).
  * =====================================================================================
  */
 static Valor* insertVal(Valor *ini, Valor *novo)
@@ -65,7 +62,7 @@ static Valor* insertVal(Valor *ini, Valor *novo)
  *         Name:  remapeiaTabela
  *  Description:  Funcao que cuida do remapeamento dos dados quando N se aproxima
                   de um valor critico. Para isso, a funcao dobra (aproximadamente) o
-				  tamanho da tabela atual e faz um novo hash dos dados ja inseridos.
+				  tamanho da tabela atual e faz um novo hash dos dados.
  * =====================================================================================
  */
 
@@ -75,22 +72,21 @@ static void remapeiaTabela()
 	Node *novo;
 	Valor **tabela = malloc(N * sizeof(Valor*));	
 	static int pos = 0;
-	int primo[16] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
-		98317, 196613, 393241, 786433, 1572869, 3145739, 6291469, 12582917};
+	int primo[21] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
+		98317, 196613, 393241, 786433, 1572869, 3145739, 6291469, 
+		12582917, 25165843, 50331653, 100663319, 201326611, 402653189};
 
-	printf("remapeando...\n");	
-	/*copia valores da tabela atual e libera ponteiros*/
+	
+	/*copia endereco dos valores da tabela atual*/
 	for (i = 0; i < M; i++)
 	{
 		if(t1lp_head[i].valor != NULL)
 			tabela[j++] = t1lp_head[i].valor;
 	}
 	
-	/*realoca memoria da tabela, reinicializa-a e redefine M*/
+	/*redefine M e aloca espaco para uma nova tabela, inicializando-a */
 	if (M < primo[pos])
 		M = primo[pos++];
-	
-
 	novo = malloc(M * sizeof(Node));
 	for (i = 0; i < M; i++)
 		novo[i].valor = NULL;
@@ -147,7 +143,8 @@ void ST_t1_insert(Valor *val)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  searchRec
- *  Description:  Funcao de busca recursiva na LLRBT.
+ *  Description:  Funcao de busca recursiva que verifica se uma chave se encontra
+                  numa lista de nodes.
  * =====================================================================================
  */
 static Valor* searchRec(Node *x, int pos, char *chave)
@@ -163,7 +160,8 @@ static Valor* searchRec(Node *x, int pos, char *chave)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t1_search
- *  Description:  
+ *  Description:  Funcao de busca para o cliente. Faz o mapeamento da entrada
+                  antes de chamar a busca recursiva.
  * =====================================================================================
  */
 Valor* ST_t1_search(char *chave)
@@ -175,7 +173,7 @@ Valor* ST_t1_search(char *chave)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t1_init
- *  Description:  
+ *  Description:  inicializa a tabela de simbolos T1
  * =====================================================================================
  */
 void ST_t1_init()
@@ -193,7 +191,8 @@ void ST_t1_init()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  listRec
- *  Description:  Devolve todos os tokens ou palavras encontradas na LLRBT.
+ *  Description:  Devolve o numero de tokens ou palavras encontradas em T1, salvando
+                  as ocorrencias.
                   modo 0: tokens.
 				  modo 1: palavras.
  * =====================================================================================

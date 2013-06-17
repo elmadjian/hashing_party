@@ -1,5 +1,5 @@
 /*=================================================*/
-/*|||||||||||||||| MAC 323 - EP3 ||||||||||||||||||*/
+/*|||||||||||||||| MAC 323 - EP4 ||||||||||||||||||*/
 /*||||| Nome: Carlos Eduardo Leao Elmadjian |||||||*/
 /*||||| NUSP: 5685741 |||||||||||||||||||||||||||||*/
 /*||||| Arquivo: main.c |||||||||||||||||||||||||||*/
@@ -19,32 +19,31 @@ int main(int argc, char **argv)
 	/*============= Variaveis =========================================*/
 	/*                                                                 */
     /* token -> linha temporaria para ser concatenada a uma frase      */
-	/* filname -> guarda o nome do arquivo aberto pelo usuario         */
+	/* filename -> guarda o nome do arquivo aberto pelo usuario        */
+	/* opcao -> armazena a opcao do menu digitada pelo usuario         */
 	/* primPalavra -> utilizada para guardar uma palavra qualquer      */
-	/* id -> guarda o identificador da sentenca                        */
+	/* id -> guarda os ponteiros identificadores da sentenca           */
+	/* frase -> guarda os ponteiros para inicio e fim de uma frase     */
+	/* info -> guarda os ponteiros para sentenca anotada               */
 	/* copia -> copia temporaria de uma palavra                        */
-	/* frase -> armazena apenas a frase de uma sentenca                */
 	/* linha -> armazena temporariamente uma linha do STREAM           */
 	/* temp -> guarda os dados retirados de um token                   */
 	/* i, j, k -> contadores                                           */
 	/* Nsnt -> guarda o numero total de sentencas                      */
-	/* Ntkn -> guarda o numero total de tokens                         */
-	/* Npal -> guarda o numero total de palavras                       */
-	/* posicao ->        */
-	/* arquivo -> descritor de filename (STREAM)                       */
+ 	/* arquivo -> descritor de filename (STREAM)                       */
 	/*                                                                 */
 	/*=================================================================*/
 	char *token;
 	char filename[32];
-	char opcao[32];
+	char opcao[8];
 	char primPalavra[256];
-	char copia[256];
-	char linha[BUFFER];
-	char temp[2][256];
-	int i, j, k, Nsnt, Ntkn = 0, Npal = 0;
 	int id[2];
 	int frase[2];
 	int info[2];
+	char copia[256];
+	char linha[BUFFER];
+	char temp[2][256];
+	int i, j, k, Nsnt; 
 	FILE *arquivo;
 
 	/*==== Testando parametros de entrada ===*/
@@ -89,8 +88,6 @@ int main(int argc, char **argv)
 		sscanf(linha, "%s #%d (%d", primPalavra, &i, &j);
 		if (strcmp(primPalavra, "Sentence") == 0)
 		{
-			Ntkn += j; /*atualiza numero de tokens*/
-			
 			/* encontrando o id da sentenca */
 			id[1] = ftell(arquivo);
 			id[0] = id[1] - strlen(linha);
@@ -128,8 +125,6 @@ int main(int argc, char **argv)
 				{
 					case 1: /* palavra */
 						strcpy(temp[0], primPalavra);
-						if (isalpha(primPalavra[0]))
-							Npal++;
 						break;
 					case 0: /* lema */
 						strcpy(temp[1], primPalavra);
@@ -153,7 +148,6 @@ int main(int argc, char **argv)
 	/*==== MENU ===*/
 	while (k != 0)
 	{
-		printf("tokens: %d,  palavras: %d\n", Ntkn, Npal);
 		strcpy(primPalavra, " ");
 		printf("================================\n"
 			   "|             MENU             |\n"
@@ -201,7 +195,7 @@ int main(int argc, char **argv)
 					break;			
 			}
 		}
-		/* hash das opcoes que nao dependem de palavra */
+		/* hash das opcoes que nao dependem de dois parametros */
 		else if (strcmp(primPalavra, " ") == 0)
 		{
 			switch(hashOption(opcao))

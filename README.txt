@@ -1,117 +1,107 @@
 /*=================================================*/
-/*|||||||||||||||| MAC 323 - EP3 ||||||||||||||||||*/
+/*|||||||||||||||| MAC 323 - EP4 ||||||||||||||||||*/
 /*||||| Nome: Carlos Eduardo Leao Elmadjian |||||||*/
 /*||||| NUSP: 5685741 |||||||||||||||||||||||||||||*/
 /*||||| Arquivo: README.txt |||||||||||||||||||||||*/
 /*=================================================*/
 
-1) Este EP3 e' composto pelos seguintes arquivos:
+1) Este EP4 e' composto pelos seguintes arquivos:
    - README.txt (este arquivo);
    - main.c (codigo-fonte do programa principal);
-   - LLRBT.c (codigo-fonte do modulo de Red-Black tree e funcoes relacionada);
-   - LLRBT.h (interface do modulo para o cliente);
+   - t1enc.c (codigo-fonte da tabela T1 (res. de colisoes por encadeamento));
+   - 12enc.c (codigo-fonte da tabela T2 (res. de colisoes por encadeamento)); 
+   - t1lp.c (codigo-fonte da tabela T1 (res. de colisoes por linear probing));
+   - t2lp.c (codigo-fonte da tabela T2 (res. de colisoes por linear probing));
+   - interface.h (interface que unifica todo o que esta disponivel para o cliente);
    - makefile (arquivo de conf. de compilacao);
    - script.sh (script para converter um texto pelo coreNLP);
    - sample.txt.out (arquivo de texto para teste).
 
-2) Para compilar e rodar o programa ep3, digite no shell:
-   > make && ./ep3 -f<nome_do_arquivo>
+2) Para compilar e rodar as quatro variantes do programa ep4, digite no shell:
+   > make ep4encenc && ./ep4 -f<nome_do_arquivo>
+   > make ep4lpenc && ./ep4 -f<nome_do_arquivo>
+   > make ep4enclp && ./ep4 -f<nome_do_arquivo>
+   > make ep4lplp && ./ep4 -f<nome_do_arquivo>
+   ----------------------------------------------------
+   Se desejar remover os objetos de compilacao, execute:
+   > make clean
 
 3) Estruturas de dados:
-   - Arvores rubro-negras esquerdistas:
-     + Para este EP3 foi utilizada como tabela de simbolos as ARNEs ou LLRBT (ingles).
-     + As LLRBT comportam-se como arvores 2-3 (ou seja, estao sempre balanceadas), com
-       a vantagem de podermos executar tarefas rotineiras de ST, e.g. buscas, como 
-       se fossem arvores binarias, uma vez que cada no' da' origem a apenas dois descendentes,
-       um menor e um maior.
-     + Para manter uma estrutura hibrida entre arvores 2-3 e arvores binarias, as LLRBT
-       utilizam cores para diferenciar os nos, de modo que o balanceamento e' garantido
-       mantendo-se a mesma distancia negra para a raiz (tanto por meio de rotacoes
-       quanto por mudanca de cores).
-     + struct utilizada por Node (LLRBT) neste EP:
+   - Tabelas de hashing:
+     + Para este EP4 foram utilizadas as chamadas tabelas de hashing como tabelas de simbolos.
+	 + O mapeamento feito nos quatro modulos diferentes exigidos pelo enunciado foi feito
+       com uma mesma funcao de hashing.
+     + As tabelas T1 e T2 que resolvem conflitos por encademento fazem uso de uma lista ligada
+       que aglutina as colisoes de mapeamentos coincidentes. Dentro de cada no' dessa lista,
+	   ha um ponteiro para uma fila circular sem cabeca, que armazena entradas identicas.
+	   Portanto, palavras distintas que colidem pertencem 'a mesma lista ligada de nodes, 
+	   mas nao 'a mesma fila de objetos identicos.
+     + As tabelas T1 e T2 que resolvem conflitos por linear probing tambem utilizam a
+       a estrutura da fila para armazenar objetos redundantes. Contudo, strings distintas
+	   mapeadas para o mesmo endereco sao armazenadas na proxima posicao vazia do vetor, isto e',
+       realiza-se o probing linear para objetos distintos que colidem.
+     + structs utilizadas por Node neste EP:
 
+	   caso a) encadeamento:
        struct node
        {
-          char *chave;           -> identificador do item ou chave de um no' da arvore
-          Valor *val;            -> guarda uma lista de valores correspondente 'a chave
-          struct node *esquerda; -> descendente menor 
-          struct node *direita;  -> descendente maior
-          int filhos;            -> numero de descendentes do no' atual
-          int cor;               -> cor do no'
-	} Node;		
+          Valor *val;            -> guarda uma lista de valores identicos
+          struct node *prox;     -> proximo item com colisao na lista
+	   } Node;
 
-    - Listas ligadas:
-      + Este EP utiliza uma implementacao de fila com uma estrutura de lista ligada sem cabeca.
+       caso b) linear probing:
+       struct node
+       {
+          Valor *val;            -> guarda uma lista de valores identicos
+	   } Node;
+
+   
+
+    - Filas circulares:
+      + Este EP utiliza uma implementacao de fila circular, com uma estrutura de lista ligada 
+        sem cabeca.
       + Nessa fila, armazenamos itens do tipo abstrato Valor, que guarda caracteristicas de
         cada palavra extraida do texto de entrada. O ponteiro para o inicio dessa fila
-        fica guardado dentro da LLRBT, de acordo com a chave correspondente. Por exemplo:
-        para a chave "casa", podemos encontrar uma fila do tipo Valor em que elementos possiveis
-        sao "Casa", "CASA", "casa"...
+        fica guardado dentro de um Node, de acordo com a chave correspondente. 
       + struct utilizada por Valor neste EP:
 
         struct valor
         {
            char *palavra;        -> armazena uma palavra correspondente a uma chave da arvore
            char *lemma;          -> armazena o lema da palavra
-           int loc_ini;          -> indice para a posicao inicial da palavra no texto
-           int loc_fim;          -> indice para a posicao final da palavra no texto
            int sentenca;         -> indice para um vetor de sentencas indexado por chaves
+           struct valor *ant     -> palavra anterior que pertence 'a mesma chave
            struct valor *prox;   -> proxima palavra que pertence 'a mesma chave
          } Valor;
 
     - Vetor indexado por chaves:
       + Este EP possui um vetor de sentencas indexado por chaves, em que cada entrada do vetor
         corresponde a um conjunto de informacoes pertencentes a um tipo abstrato Sentenca.
-      + A opcao por um vetor indexado por chaves se da em funcao da sua eficiencia, mas ao
-        custo de (possivelmente) uma grande complexidade de espaco para alguns casos. Em testes
-        preliminares, para processar textos verdadeiramente grandes, o EP3 chegou a consumir 
-        dezenas de MB de RAM.
+      + Cada elemento da struct do tipo Sentenca armazena dois ponteiros: um para o inicio e
+        outro para o fim da ocorrencia desejada num STREAM (id, frase ou sentenca anotada).
       + O tipo abstrato Sentenca nao apresenta uma chave em si, mas apenas tres campos definidos
         pela struct abaixo:
 
         struct sentenca
         {
-           char *id;             -> identificador da sentenca dado pelo coreNLP
-           char *frase;          -> a sentenca em si, uma string que armazena a frase
-           char *info;           -> a sentenca anotada dada pelo coreNLP
+           int id[2];             -> identificador da sentenca dado pelo coreNLP
+           int frase[2];          -> a sentenca em si, uma string que armazena a frase
+           int info[2];           -> a sentenca anotada dada pelo coreNLP
         } Sentenca;
      
 
 4) ** Observacoes importantes **:
 
-- O caractere "carriage return" (^M):
-
-	O programa coreNLP devolve um arquivo que possui um caractere especial de termino
-	de linha (^M). Optei por nao concatenar as frases quebradas, isto e', salvando-as
-	como unica sentenca, mas mantendo sua formatacao (nem sempre agradavel) original.
-
 - Case sensitive: maiusculas e minusculas
 
-	Para a arvore que guarda as palavras, considerei que seria mais adequado que as chaves
-	contivessem apenas palavras em letras minusculas -- tanto para padronizar o processo
-	de comparacao quanto para uniformidade da tabela. Uma vez que o enunciado nao e'
-	explicito sobre a questao, essa me pareceu a solucao mais razoavel. Ja para a arvore
-	de lemas, por entender que os lemas sao justamente unicos, nao havia essa necessidade
-	de uniformizar um formato determinante de chave.
+    Dado que no forum da disciplina o professor determinou que palavras iguas diferenciadas
+    apenas por maiusculas deveriam ser tradadas como casos distintos, descontinuei a abordagem
+    feita no EP3, em que nao fazia distincao de palavras maiusculas de minusculas.	
+	
+- Ponteiros para sentencas:
 
-- Sentencas armazenadas separadamente:
-
-	Optei por armazenar informacoes relativas a sentencas em um vetor indexado por chaves,
-	uma vez que seria redundante armazenar a mesma sentenca varias vezes para entradas
-	e arvores diferentes. Desse modo, com as arvores armazenando apenas um ponteiro para
-	as sentencas -- e nao as sentencas em si -- faz-se um uso mais racional de complexidade 
-	de espaco sem perda de eficiencia.
-
-- Por que um vetor indexado por chaves e nao uma lista ligada:
-
-	Optei por um vetor indexado por chaves por uma questao de eficiencia em funcao do
-	tempo de execucao. E' evidente que para um usuario que deseja realizar no programa uma 
-	unica busca, armazenar as sentencas em uma lista ligada parece bastante razoavel, 
-	visto que isso dispensaria a necessidade de	saber de antemao quanto espaco teriamos que
-   	reservar para um vetor de sentencas.
-	Mas essa e' uma presuncao um tanto ousada. Por isso, optei por um pre-processamento das 
-	linhas do arquivo para determinar o tamanho final de um vetor de sentencas. O custo
-	desse processo e' necessariamente O(n), o que e' equivalente ao pior caso de uma busca
-	numa lista ligada. No entanto, a busca pela sentenca se da em O(1) -- sempre --, o que e' 
-	muito superior 'a busca numa lista ligada (O(n)), sobretudo em textos grandes.
-	Mesmo que o usuario faca uma unica busca, o custo do pre-processamento e' bastante razoavel.
+	Em funcao de o enunciado ter determinado desta vez que um arquivo de texto esperado pode
+    ser realmente grande (digamos, nao apenas um livro gigantesco, mas 100 desses), salvar
+    o texto correspondente a uma determinada palavra (como foi feito no EP3) se tornou inviavel
+    do ponto de vista da complexidade de espaco. Neste caso, optei por armazenar apenas um
+    inteiro correspondente 'a posicao no STREAM de um arquivo de texto aberto.

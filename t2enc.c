@@ -14,11 +14,9 @@
 
 /*========================= Definicao de tipos e structs =============================*/
 /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-
-
-/*Node: define um no' (ou entrada) da tabela de simbolos. Guarda uma 
-  chave do tipo char, uma lista do tipo Valor e a quantidade de objetos dessa 
-  chave (n)*/
+/*Node: define um no' (ou entrada) da tabela de simbolos. Guarda uma chave do
+  do tipo Valor (uma fila contendo os mesmos objetos) e um ponteiro para
+  a chave seguinte */
 typedef struct node
 {
 	Valor *valor;
@@ -41,7 +39,8 @@ static int cnt;            /*contador para funcoes recursivas*/
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  insertVal
- *  Description:  Insere um Valor novo numa fila circular sem cabeca do tipo Valor.
+ *  Description:  Insere um Valor novo numa fila circular sem cabeca duplamente
+                  encadeada (para poder exibir os resultados em ordem).
  * =====================================================================================
  */
 static Valor* insertVal(Valor *ini, Valor *novo)
@@ -62,7 +61,8 @@ static Valor* insertVal(Valor *ini, Valor *novo)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  newNode
- *  Description:  Cria um novo no que recebe uma palavra "chave", um Valor e uma cor.
+ *  Description:  Cria um novo no' que recebe um Valor *val e o endereco para
+                  o proximo no'.
  * =====================================================================================
  */
 static Node* newNode(Valor *val, Node *proximo)
@@ -73,6 +73,7 @@ static Node* newNode(Valor *val, Node *proximo)
 	novo->prox = proximo;
 	return novo;
 }
+
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  remapeiaTabela
@@ -88,10 +89,11 @@ static void remapeiaTabela()
 	Node *t, **novo;
 	Valor **tabela = malloc(N * sizeof(Valor*));	
 	static int pos = 0;
-	int primo[16] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
-		98317, 196613, 393241, 786433, 1572869, 3145739, 6291469, 12582917};
+	int primo[21] = {389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
+		98317, 196613, 393241, 786433, 1572869, 3145739, 6291469, 
+		12582917, 25165843, 50331653, 100663319, 201326611, 402653189};
 	
-	/*copia valores da tabela atual e libera ponteiros*/
+	/*copia valores da tabela atual*/
 	for (i = 0; i < M; i++)
 	{
 		if(t2enc_head[i] != NULL)
@@ -105,7 +107,7 @@ static void remapeiaTabela()
 		}
 	}
 	
-	/*realoca memoria da tabela, reinicializa-a e redefine M*/
+	/*redefine M e aloca memoria para nova tabela*/
 	if (M < primo[pos])
 		M = primo[pos++];
 	novo = malloc(M * sizeof(Node));
@@ -120,12 +122,10 @@ static void remapeiaTabela()
 }
 
 
-
-
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t2_insert
- *  Description:  Insere um valor na tabela de simbolos t2 para o cliente. Utiliza
+ *  Description:  Insere um valor na tabela de simbolos T2 para o cliente. Utiliza
                   metodo de hashing por encadeamento e tem comportamento dinamico.
  * =====================================================================================
  */
@@ -180,7 +180,9 @@ static Valor* searchRec(Node *x, char *chave)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t2_search
- *  Description:  
+ *  Description:  Funcao de busca para o cliente. Faz  varredura por ocorrencia em
+                  T1 para em seguida buscar em T2. Realiza o mapeamento da entrada
+                  antes de chamar a busca recursiva.
  * =====================================================================================
  */
 Valor* ST_t2_search(char *chave)
@@ -195,7 +197,7 @@ Valor* ST_t2_search(char *chave)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t2_init
- *  Description:  
+ *  Description:  inicializa a tabela de simbolos T2
  * =====================================================================================
  */
 void ST_t2_init()
@@ -208,7 +210,7 @@ void ST_t2_init()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  listRec
- *  Description:  Devolve todos os tokens ou palavras encontradas na LLRBT.
+ *  Description:  Salva o endereco de todos os tokens ou palavras encontradas na T2.
                   modo 0: tokens.
 				  modo 1: palavras.
  * =====================================================================================
@@ -265,7 +267,7 @@ void ST_t2_list(int modo)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  ST_t2_count
- *  Description:  Devolve o numero de lemas distintos na tabela de simbolos.
+ *  Description:  Devolve o numero de lemas distintos de T2.
  * =====================================================================================
  */
 int ST_t2_count()

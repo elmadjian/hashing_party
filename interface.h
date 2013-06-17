@@ -5,11 +5,11 @@
 /*||||| Arquivo: interface.h ||||||||||||||||||||||*/
 /*=================================================*/
 
-/*====== Definicao de tipos e structs para o cliente =======*/
+/*====== Definicao de tipos e structs para o cliente =======++++++++++++++++++++ */
 
-/*Valor: guarda uma palavra, o lema correspondente, a posicao
-  inicial no texto, a posicao final, o id da sentenca e um
-  ponteiro para uma proxima palavra de valor equivalente*/
+/*Valor: guarda uma palavra, o lema correspondente, o id da 
+  sentenca e ponteiros para o objeto anterior e o proximo de 
+  valor equivalente*/
 typedef struct valor
 {
 	char *palavra;
@@ -20,8 +20,9 @@ typedef struct valor
 } Valor;
 
 
-/*====== prototipos das funcoes para o cliente ============ */
+/*====== prototipos das funcoes para o cliente ============++++++++++++++++++++ */
 
+/*funcoes de manipulacao de tabelas de simbolos*/
 void ST_t1_init(); 
 void ST_t2_init();
 int ST_t1_count(int modo);
@@ -33,29 +34,41 @@ Valor* ST_t2_search();
 void ST_t1_list(int modo);
 void ST_t2_list(int modo);
 
-
-
 /*manipulacao de valores (palavras, lemas, posicao da sentenca)*/
 Valor* buildVal(char *palavra, char *lema, int sent_id);
 void printValor(Valor *val, FILE* arquivo, int modo);
-/*void printValorLem(Node *val, int modo);*/
-
-/*manipulacao de tabelas de simbolos*/
-/*void insertPalST(char *chave, Valor *val);
-void insertLemST(char *chave, Valor *val);
-Valor* searchPalST(char *chave);
-Valor* searchLemST(char *chave);
-void chavePalST(int modo);
-void chaveLemST(int modo);
-int contaValDistST(int modo);*/
 
 /*manipulacao de sentencas*/
 void initSentence(int slots);
 void insertSentence(int pos, int *id, int *frase, int *info);
-void printSentence(int num, int modo, FILE* arquivo);
 
 /*funcoes de uso geral*/
 int comparaString(const void *stringA, const void *stringB);
 char* lowerCase(char *palavra);
 int hashOption(char *opcao);
 int hash(char *palavra, int tableSize);
+
+
+/*====== breve descricao das funcoes =======================++++++++++++++++++++ */
+/*ST_t1_init        inicializa a tabela T1                                       */
+/*ST_t2_init        inicializa a tabela T2                                       */
+/*ST_t1_count       conta elementos de T1 (tokens, palavras, elementos distintos)*/
+/*ST_t2_count       conta lemas distintos em T2                                  */
+/*ST_t1_insert      insere uma palavra do tipo Valor em T1                       */
+/*ST_t2_insert      insere um lema do tipo Valor em T2                           */
+/*ST_t1_search      busca uma palavra em T1                                      */
+/*ST_t2_search      busca um lema em T2                                          */
+/*ST_t1_list        lista elementos (tokens, palavras) de T1                     */
+/*ST_t2_list        lista lemas (com ou sem derivacoes) de T2                    */
+
+/*buildVal          constroi um elemento do tipo Valor                           */
+/*printValor        imprime uma sentenca (completa ou nao) de um Valor val       */
+
+/*initSentence      inicializa um vetor de sentencas                             */
+/*insertSentence    insere dados de endereco das sentencas                       */
+
+/*comparaString     funcao comparadora para o qsort                              */
+/*lowerCase         transforma uma string em minuscula                           */
+/*hashOption        retorna um codigo correspondente a uma opcao                 */
+/*hash              mapeia um endereco em funcao de uma string                   */
+/*==========================================================++++++++++++++++++++ */
